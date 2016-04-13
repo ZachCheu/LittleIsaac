@@ -35,6 +35,8 @@ public class RAM {
     public static boolean isJump = false;
     public static boolean hitLfallR = false;
     public static boolean hitRfallL = false;
+    public static int rotationAngle = 0;
+    public static int deadMovement = 30;
     public static int t = 0;
     public static boolean isCountDownTimerFinished = false;
 

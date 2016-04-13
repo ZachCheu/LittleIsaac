@@ -52,7 +52,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     //projectile components
     int randobj, rvalue, fallnear,sUpDown = 20,sChange;
     Random r = new Random();
-    boolean mleft = true, sleft = false;
+    boolean mleft = true, sleft = false, everyOther = true,enablehit =true;
 
 
     @Override
@@ -475,12 +475,13 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         RAM.Rocket_1.setX(-100);
                         randobj = 180;
                         mleft = false;
-                    }else if(((RAM.Rocket_1.getX()+90 > RAM.player_user.getX()) && RAM.Rocket_1.getX()<RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_1.getY())){
+                    }else if((enablehit&&(RAM.Rocket_1.getX()+90 > RAM.player_user.getX()) && RAM.Rocket_1.getX()<RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_1.getY())){
                         RAM.Rocket_1.setX(-100);
                         randobj = 180;
                         mleft = false;
                         RAM.isFalling = true;
                         RAM.hitLfallR = true;
+                        enablehit = false;
                     }
                     else{
                         RAM.Rocket_1.setX(RAM.Rocket_1.getX()+20f);
@@ -490,12 +491,13 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
                         randobj = 180;
                         mleft = true;
-                    }else if((((RAM.Rocket_2.getX() < RAM.player_user.getX()+RAM.player_user.getWidth()) && RAM.Rocket_2.getX()+90>RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_2.getY()))){
+                    }else if((enablehit&&((RAM.Rocket_2.getX() < RAM.player_user.getX()+RAM.player_user.getWidth()) && RAM.Rocket_2.getX()+90>RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_2.getY()))){
                         RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
                         randobj = 180;
                         mleft = true;
                         RAM.isFalling = true;
                         RAM.hitRfallL = true;
+                        enablehit = false;
                     }
                     else{
                         RAM.Rocket_2.setX(RAM.Rocket_2.getX()-20f);
@@ -506,10 +508,11 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                     if(RAM.Bomb.getY()>(2*RAM.SCREEN_HEIGHT/3)-50){
                         RAM.Bomb.setY(-50);
                         randobj = 180;
-                    }else if(((RAM.Bomb.getY()+RAM.Bomb.getHeight()>RAM.player_user.getY()) && (Math.abs(RAM.Bomb.getX()-RAM.player_user.getX()))<RAM.Bomb.getWidth())){
+                    }else if(enablehit&&((RAM.Bomb.getY()+RAM.Bomb.getHeight()>RAM.player_user.getY()) && (Math.abs(RAM.Bomb.getX()-RAM.player_user.getX()))<RAM.Bomb.getWidth())){
                         RAM.Bomb.setY(-50);
                         randobj = 180;
                         RAM.isFalling = true;
+                        enablehit = false;
                     }
                     else {
                         RAM.Bomb.setY(RAM.Bomb.getY() + 25f);
@@ -590,17 +593,31 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
             if (RAM.isFalling) {
                 RAM.modifier = 0;
+                if(everyOther){
+                    RAM.deadMovement--;
+                    everyOther = false;
+                }else{
+                    everyOther = true;
+                }
                 RAM.player_user.setY(RAM.player_user.getY() + RAM._score_counter);
+                if(RAM.hitRfallL) {
+                    RAM.player_user.setX(RAM.player_user.getX() - RAM.deadMovement);
+                }else if(RAM.hitLfallR)
+                    RAM.player_user.setX(RAM.player_user.getX() + RAM.deadMovement);
                 RAM._score_counter++;
             } else {
 
             }
-
             if (RAM.player_user.getY() >= RAM.SCREEN_HEIGHT) {
                 RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
                 RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
                 RAM.isFalling = false;
                 RAM._score_counter = 0;
+                RAM.rotationAngle = 0;
+                RAM.hitRfallL = false;
+                RAM.hitLfallR = false;
+                RAM.deadMovement = 30;
+                enablehit = true;
             }
         }
     }
