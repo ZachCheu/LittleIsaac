@@ -1,4 +1,4 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -110,7 +110,24 @@ public class player {
             matrix.postRotate(RAM.rotationAngle);
             matrix.postTranslate(px + this.x, py + this.y);
             canvas.drawBitmap(this.player_bitmap_right, matrix, null);
-        }else if(this.direction == 0){
+        }else if(RAM.fallL){
+            RAM.rotationAngle -=10;
+            px = this.player_bitmap_left.getWidth()/2;
+            py = this.player_bitmap_left.getHeight()/2;
+            matrix.postTranslate(-player_bitmap_left.getWidth()/2, -player_bitmap_left.getHeight()/2);
+            matrix.postRotate(RAM.rotationAngle);
+            matrix.postTranslate(px + this.x, py + this.y);
+            canvas.drawBitmap(this.player_bitmap_right, matrix, null);
+        }else if(RAM.fallR){
+            RAM.rotationAngle += 10;
+            px = this.player_bitmap_left.getWidth() / 2;
+            py = this.player_bitmap_left.getHeight() / 2;
+            matrix.postTranslate(-player_bitmap_left.getWidth() / 2, -player_bitmap_left.getHeight() / 2);
+            matrix.postRotate(RAM.rotationAngle);
+            matrix.postTranslate(px + this.x, py + this.y);
+            canvas.drawBitmap(this.player_bitmap_left, matrix, null);
+        }
+        else if(this.direction == 0){
             canvas.drawBitmap(this.player_bitmap_left, this.x, this.y, null);
         }else{
             canvas.drawBitmap(this.player_bitmap_right, this.x, this.y, null);

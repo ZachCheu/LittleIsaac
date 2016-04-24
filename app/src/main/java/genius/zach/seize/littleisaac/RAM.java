@@ -1,4 +1,4 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 import android.graphics.Bitmap;
 import android.graphics.Paint;
@@ -20,6 +20,8 @@ public class RAM {
     public static Bitmap RocketBit1, RocketBit2;
     public static Bitmap BombBit;
     public static Bitmap GrenadeBit;
+    public static Bitmap explosion1;
+    public static Bitmap explosion2;
 
     public static player player_user;
     public static cloud cloud_render_1;
@@ -28,6 +30,7 @@ public class RAM {
     public static missile Rocket_1, Rocket_2;
     public static fallingObject Bomb;
     public static sideObject Grenade_1,Grenade_2;
+    public static particle Explosion;
 
     public static boolean isFalling = false;
     public static float modifier;
@@ -39,6 +42,17 @@ public class RAM {
     public static int deadMovement = 30;
     public static int t = 0;
     public static boolean isCountDownTimerFinished = false;
+    public static boolean isBlast = false;
+    public static boolean blastLeft = false;
+    public static int blastAmount = 45;
+    public static boolean canControl = true;
+    public static boolean anotherExplosion = true;
+    public static int CurrentScore = 0;
+    public static int GlobalScore = 0;
+    public static int GlobalHighScore = 0;
+    public static double StartTime = 0;
+    public static boolean fallR = false;
+    public static boolean fallL = false;
 
 
     //different paint buckets

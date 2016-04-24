@@ -1,4 +1,4 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 
 
@@ -26,6 +26,12 @@ public class sideObject extends rectangle{
     }
     public void setY(float y) {
         this.y = y;
+    }
+    public float getHeight(){
+        return grenade.getHeight();
+    }
+    public float getWidth(){
+        return grenade.getWidth();
     }
     public void draw(Canvas canvas){
         canvas.drawBitmap(grenade, this.x, this.y, null);

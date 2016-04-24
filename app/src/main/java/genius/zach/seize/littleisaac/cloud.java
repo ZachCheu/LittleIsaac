@@ -1,4 +1,4 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -50,7 +50,7 @@ public class cloud {
     }
 
     public int getWidth() {
-        return width;
+        return cloud_render.getWidth();
     }
 
     public void setWidth(int width) {

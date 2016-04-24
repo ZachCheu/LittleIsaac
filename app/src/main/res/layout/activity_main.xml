@@ -1,47 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
-    android:background="#d8ece8">
+    android:paddingBottom="0dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp"
+    tools:context=".MainActivity"
+    android:id="@+id/e">
     <TextView
         android:id="@+id/titleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Tilt"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="40dp"
+        android:textSize="140dp"
         android:textColor="#d3d3d3"
         android:layout_marginTop="27dp"
         android:layout_x="84dp"
         android:layout_y="49dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
-    <TextView
-        android:id="@+id/titleText2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="High Score: "
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="40dp"
-        android:textColor="#d3d3d3"
-        android:layout_x="84dp"
-        android:layout_y="49dp"
-        android:layout_below="@+id/titleText"
-        android:layout_centerHorizontal="true" />
 
     <ImageButton
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:id="@+id/playButton"
+        android:id="@+id/playButton1"
         android:layout_x="153dp"
         android:layout_y="470dp"
-        android:src="@drawable/replay"
+        android:src="@drawable/play"
         android:scaleType="fitCenter"
         android:background="#00000000"
         android:visibility="visible"
         android:layout_marginBottom="51dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
+
+    <View
+        android:layout_width="150dp"
+        android:layout_height="1dp"
+        android:background="#d3d3d3"
+        android:layout_alignTop="@+id/titleText"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/view" />
+    <View
+        android:layout_width="150dp"
+        android:layout_height="1dp"
+        android:background="#d3d3d3"
+        android:layout_below="@+id/titleText2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="3dp" />
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
@@ -52,4 +61,6 @@
         ads:adSize="BANNER"
         ads:adUnitId="@string/banner_ad_unit_id">
     </com.google.android.gms.ads.AdView>
+
 </RelativeLayout>
+

@@ -1,12 +1,14 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -25,6 +27,10 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.seize.littleisaac.R;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import java.util.Random;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -39,7 +45,9 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     //Variables associated with GameLoopThread
     private GameLoopThread gameLoopThread;
     static boolean textures_isFinished_loading;
-    static boolean isGameLoopThreadRunning = false;
+    public boolean isGameLoopThreadRunning = false;
+    static boolean startGame = true;
+    public TextView t, a;
 
     //UI Components
     private ProgressBar loader_spinner;
@@ -48,11 +56,16 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     private View front_cover;
     private Typeface score_font;
     private TextView score;
+    private final Paint scorePaint = new Paint();
+    private final Paint highScorePaint = new Paint();
+    private final Paint continueGame = new Paint();
+
+    private AdView mAdView;
 
     //projectile components
-    int randobj, rvalue, fallnear,sUpDown = 20,sChange;
+    int randobj = 0, rvalue, fallnear,sUpDown = 20,sChange;
     Random r = new Random();
-    boolean mleft = true, sleft = false, everyOther = true,enablehit =true;
+    boolean mleft = true, sleft = false, everyOther = true,enablehit =true,isDead = false;
 
 
     @Override
@@ -62,11 +75,20 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(0xFFFFFFFF, WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //Get Display Width and Height
+        try {
+            mAdView = (AdView) findViewById(R.id.adView);
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         Display device_display = getWindowManager().getDefaultDisplay();
         RAM.SCREEN_HEIGHT = device_display.getHeight();
         RAM.SCREEN_WIDTH = device_display.getWidth();
         //load activity_loader_activity
         setContentView(R.layout.activity_loader_activity);
+        startGame = true;
+        isGameLoopThreadRunning = true;
         //textures have not loaded yet, so set boolean to false
         textures_isFinished_loading = false;
         //Connect and modify UI Components
@@ -77,12 +99,15 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         loading_text.setTypeface(loading_text_font);
         score_font = Typeface.createFromAsset(getAssets(),"fonts/loader_font.TTF");
         score = (TextView) findViewById(R.id.Loader_text);
+        t = (TextView)  findViewById(R.id.titleText);
+        a = (TextView) findViewById(R.id.titleText2);
+        t.setTypeface(loading_text_font);
+        a.setTypeface(loading_text_font);
         front_cover = (View) findViewById(R.id.front_cover);
 
         _surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         _surfaceHolder = _surfaceView.getHolder();
         _surfaceHolder.addCallback(this);
-
 
         //OnTouchListener setup
         _surfaceView.setOnTouchListener(new View.OnTouchListener() {
@@ -90,7 +115,14 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        if (isDead) {
+                            isDead = false;
+                            RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
+                            RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
+                            RAM.CurrentScore = 0;
+                        }
                         RAM.isJump = true;
+                        System.out.println("JUMPING");
                         break;
                     default:
                         break;
@@ -104,7 +136,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 new SensorEventListener() {
                     @Override
                     public void onSensorChanged(SensorEvent sensorEvent) {
-                        if (isGameLoopThreadRunning) {
+                        if (isGameLoopThreadRunning && RAM.canControl) {
                             if (-sensorEvent.values[0] > 1) {
                                 RAM.player_user.setDirection(1);
                                 RAM.modifier = 15f;
@@ -128,7 +160,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         .getSensorList(Sensor.TYPE_ACCELEROMETER).get(0),
                 SensorManager.SENSOR_DELAY_NORMAL);
 
-        new CountDownTimer(2100, 1000) {
+        new CountDownTimer(210, 100) {
             //Every tick perform what...
             public void onTick(long millisUntilFinished) {
 
@@ -146,7 +178,19 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
             }
         }.start();
         MediaPlayer mp = MediaPlayer.create(loader_activity.this, R.raw.tetris_gameboy_soundtrack);
+        MediaPlayer hit = MediaPlayer.create(loader_activity.this,R.raw.hit);
         mp.start();
+    }
+
+    public void startEndingActivity(){
+        try {
+            gameLoopThread.setRunning(false);
+            //gameLoopThread.stop();
+            Intent i = new Intent(loader_activity.this, end_screen.class);
+            startActivity(i);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -233,7 +277,22 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
         public void doStart() {
             synchronized (_surfaceHolder) {
+                isGameLoopThreadRunning = true;
                 //load textures here!
+
+                scorePaint.setColor(Color.parseColor("#f4bcc4"));
+                scorePaint.setTypeface(loading_text_font);
+                scorePaint.setTextSize(75);
+                highScorePaint.setColor(Color.parseColor(("#f4bcc4")));
+                highScorePaint.setTypeface(loading_text_font);
+                highScorePaint.setTextSize(125);
+                continueGame.setColor(Color.GRAY);
+                continueGame.setTypeface(loading_text_font);
+                continueGame.setTextSize(50);
+
+                RAM.StartTime = System.currentTimeMillis();
+                System.out.println(RAM.StartTime);
+
                 RAM.player_bitmap_right = BitmapFactory.decodeResource(getResources(), R.drawable.character_right);
                 RAM.player_bitmap_left = BitmapFactory.decodeResource(getResources(), R.drawable.character_left);
 
@@ -259,6 +318,10 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 //load tree data!
                 RAM.tree_type_1 = BitmapFactory.decodeResource(getResources(), R.drawable.tree_type_1);
                 RAM.tree_type_2 = BitmapFactory.decodeResource(getResources(), R.drawable.tree_type_2);
+
+                //load explosion animation
+                RAM.explosion1 = BitmapFactory.decodeResource(getResources(),R.drawable.particle1);
+                RAM.explosion2 = BitmapFactory.decodeResource(getResources(), R.drawable.particle2);
 
                 //load clouds!
                 RAM.cloud_render = BitmapFactory.decodeResource(getResources(), R.drawable.cloud_render);
@@ -291,6 +354,9 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 RAM.player_user.setPlayer_bitmap_right(RAM.player_bitmap_right);
                 RAM.player_user.setPlayer_bitmap_left(RAM.player_bitmap_left);
 
+                //RAM.Explosion.setParticle1(RAM.explosion1);
+                //RAM.Explosion.setParticle2(RAM.explosion2);
+
                 RAM.platform_under = BitmapFactory.decodeResource(getResources(), R.drawable.middle_piece);
                 RAM.platform_under = getResizedBitmap(RAM.platform_under, 25, 25);
 
@@ -308,6 +374,10 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 RAM.portal_1 = getResizedBitmap(RAM.portal_1, 50, 50);
                 RAM.portal_2 = getResizedBitmap(RAM.portal_2, 50, 50);
 
+                RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
+                RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
+                RAM.isFalling = false;
+
                 //END OF LOADING TEXTURES//
                 textures_isFinished_loading = true;
 
@@ -318,8 +388,10 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
             long tickFPS = 1000 / 60;
             long startTime;
             long sleepTime;
+            //Log.d("A","TESTING4");
             gamePhysicsThread.setRunning(true);
             while (isGameLoopThreadRunning) {
+                //Log.d("A","TESTING3");
                 Canvas c = null;
                 startTime = System.currentTimeMillis();
                 try {
@@ -359,8 +431,14 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
 
         public void doDraw(Canvas canvas) {
+            canvas.save();
+            //Log.d("A", "TESTING5");
             if (isGameLoopThreadRunning) {
-                canvas.save();
+                if(!RAM.isBlast && !RAM.isFalling &&!RAM.fallR&&!RAM.fallL&&!RAM.hitLfallR&&!RAM.hitRfallL) {
+                    System.out.println("X: " + RAM.player_user.getX());
+                    System.out.println("Y: " + RAM.player_user.getY());
+                }
+                //Log.d("A", "TESTING2");
                 canvas.drawColor(Color.parseColor("#FFFFFF"));
 
                 //draw background tiles!
@@ -392,13 +470,14 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 }
 
                 RAM.cloud_render_1.draw(canvas);
-                RAM.cloud_render_2.draw(canvas);
+                //RAM.cloud_render_2.draw(canvas);
                 RAM.cloud_render_3.draw(canvas);
                 RAM.Rocket_1.draw(canvas);
                 RAM.Rocket_2.draw(canvas);
                 RAM.Bomb.draw(canvas);
                 RAM.Grenade_1.draw(canvas);
                 RAM.Grenade_2.draw(canvas);
+                //RAM.Explosion.draw(canvas);
                 if(RAM.hitLfallR){
                     //RAM.player_bitmap_right = RotateBitmap(RAM.player_bitmap_right, 5f);
                 }
@@ -422,10 +501,17 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                     }
                 }
 
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 100 + 20, RAM.paint6);
+                canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 125 + 20, RAM.paint6);
                 canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 20, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 100 + 60, RAM.paint7);
                 canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 60, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT, RAM.paint8);
-
+                if(!isDead) {
+                    canvas.drawText("Score: " + RAM.CurrentScore, RAM.SCREEN_WIDTH / 2 - 162, 2 * RAM.SCREEN_HEIGHT / 3 + 250, scorePaint);
+                }
+                if(isDead){
+                    canvas.drawText("Highscore: " + RAM.GlobalHighScore, RAM.SCREEN_WIDTH/2-380,RAM.SCREEN_HEIGHT/3-100,highScorePaint);
+                    canvas.drawText("Score: " + RAM.GlobalScore, RAM.SCREEN_WIDTH/2-260,RAM.SCREEN_HEIGHT/3,highScorePaint);
+                    canvas.drawText("Tap to Continue",RAM.SCREEN_WIDTH/2-200,RAM.SCREEN_HEIGHT/3+300,continueGame);
+                }
             }
             canvas.restore();
         }
@@ -444,7 +530,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
     class GamePhysicsThread {
         private boolean isRunning = false;
-
+        //Log.d()
         public GamePhysicsThread() {
 
         }
@@ -456,169 +542,258 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         public void setRunning(boolean isRunning) {
             this.isRunning = isRunning;
         }
-        public void update() {
-            randobj++;
-            if(randobj>150){
-                rvalue = r.nextInt(3);
-                randobj = 0;
-                if(rvalue == 1){
-                    fallnear = r.nextInt(500);
-                    RAM.Bomb.setX(RAM.player_user.getX()-250+fallnear);
-                }
-                if(rvalue == 2){
-                    sChange = r.nextInt(10);
-                }
-            }
-            else if(rvalue == 0){
-                if(mleft)
-                    if(RAM.Rocket_1.getX() >= RAM.SCREEN_WIDTH){
-                        RAM.Rocket_1.setX(-100);
-                        randobj = 180;
-                        mleft = false;
-                    }else if((enablehit&&(RAM.Rocket_1.getX()+90 > RAM.player_user.getX()) && RAM.Rocket_1.getX()<RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_1.getY())){
-                        RAM.Rocket_1.setX(-100);
-                        randobj = 180;
-                        mleft = false;
-                        RAM.isFalling = true;
-                        RAM.hitLfallR = true;
-                        enablehit = false;
-                    }
-                    else{
-                        RAM.Rocket_1.setX(RAM.Rocket_1.getX()+20f);
-                    }
-                else{
-                    if(RAM.Rocket_2.getX() < -50){
-                        RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
-                        randobj = 180;
-                        mleft = true;
-                    }else if((enablehit&&((RAM.Rocket_2.getX() < RAM.player_user.getX()+RAM.player_user.getWidth()) && RAM.Rocket_2.getX()+90>RAM.player_user.getX()+RAM.player_user.getWidth())&& (RAM.player_user.getY()+RAM.player_user.getHeight()>RAM.Rocket_2.getY()))){
-                        RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
-                        randobj = 180;
-                        mleft = true;
-                        RAM.isFalling = true;
-                        RAM.hitRfallL = true;
-                        enablehit = false;
-                    }
-                    else{
-                        RAM.Rocket_2.setX(RAM.Rocket_2.getX()-20f);
-                    }
-                }
-            }
-            else if(rvalue == 1){
-                    if(RAM.Bomb.getY()>(2*RAM.SCREEN_HEIGHT/3)-50){
-                        RAM.Bomb.setY(-50);
-                        randobj = 180;
-                    }else if(enablehit&&((RAM.Bomb.getY()+RAM.Bomb.getHeight()>RAM.player_user.getY()) && (Math.abs(RAM.Bomb.getX()-RAM.player_user.getX()))<RAM.Bomb.getWidth())){
-                        RAM.Bomb.setY(-50);
-                        randobj = 180;
-                        RAM.isFalling = true;
-                        enablehit = false;
-                    }
-                    else {
-                        RAM.Bomb.setY(RAM.Bomb.getY() + 25f);
-                    }
-            }
-            else if(rvalue == 2){
-                if(sleft){
-                    if(RAM.Grenade_1.getY()>(2*RAM.SCREEN_HEIGHT/3)-50){
-                        RAM.Grenade_1.setY((2*RAM.SCREEN_HEIGHT/3)-400);
-                        randobj = 180;
-                        sleft = false;
-                        sUpDown = 20;
-                        RAM.Grenade_1.setX(-50);
-                    }else{
-                        RAM.Grenade_1.setY(RAM.Grenade_1.getY()-sUpDown--);
-                        RAM.Grenade_1.setX(RAM.Grenade_1.getX() + 15f+sChange);
-                    }
-                }else{
-                    if(RAM.Grenade_2.getY()>(2*RAM.SCREEN_HEIGHT/3)-50){
-                        RAM.Grenade_2.setY((2*RAM.SCREEN_HEIGHT/3)-400);
-                        randobj = 180;
-                        sleft = true;
-                        sUpDown = 20;
-                        RAM.Grenade_2.setX(RAM.SCREEN_WIDTH);
-                    }else{
-                        RAM.Grenade_2.setY(RAM.Grenade_2.getY()-sUpDown--);
-                        RAM.Grenade_2.setX(RAM.Grenade_2.getX()-15f+sChange);
-                    }
-                }
-            }
-            if (RAM.cloud_render_1.getX() >= RAM.SCREEN_WIDTH) {
-                RAM.cloud_render_1.setX(-RAM.cloud_render_1.getWidth());
-            } else {
-                RAM.cloud_render_1.setX(RAM.cloud_render_1.getX() + 0.5f);
-            }
+        public void update()
+        {
+            //Log.d("A", "TESTING1");
+            if (startGame)
+            {
+                if (System.currentTimeMillis() - RAM.StartTime / 1000 >= 10) {
+                    randobj++;
+                    if (randobj > 150) {
+                        rvalue = r.nextInt(3);
+                        randobj = 0;
+                        RAM.anotherExplosion = true;
+                        if (rvalue == 1) {
+                            fallnear = r.nextInt(500);
+                            RAM.Bomb.setX(RAM.player_user.getX() - 250 + fallnear);
+                        }
+                        if (rvalue == 2) {
+                            sChange = r.nextInt(10);
+                        }
+                    } else if (rvalue == 0) {
+                        if (mleft)
+                            if (RAM.Rocket_1.getX() >= RAM.SCREEN_WIDTH) {
+                                RAM.Rocket_1.setX(-100);
+                                randobj = 180;
+                                mleft = false;
+                                RAM.CurrentScore++;
+                            } else if ((enablehit && (RAM.Rocket_1.getX() + 90 > RAM.player_user.getX()) && RAM.Rocket_1.getX() < RAM.player_user.getX() + RAM.player_user.getWidth()) && (RAM.player_user.getY() + RAM.player_user.getHeight() > RAM.Rocket_1.getY())) {
+                                RAM.Rocket_1.setX(-100);
+                                randobj = 180;
+                                mleft = false;
+                                RAM.isFalling = true;
+                                RAM.hitLfallR = true;
+                                enablehit = false;
+                                RAM.canControl = false;
+                                if (RAM.anotherExplosion) {
 
-            if(RAM.cloud_render_3.getX() >= RAM.SCREEN_WIDTH){
-                RAM.cloud_render_3.setX(-RAM.cloud_render_3.getWidth());
-            }else {
-                RAM.cloud_render_3.setX(RAM.cloud_render_3.getX() + 0.5f);
-            }
+                                }
+                            } else {
+                                RAM.Rocket_1.setX(RAM.Rocket_1.getX() + 20f + RAM.CurrentScore);
+                            }
+                        else {
+                            if (RAM.Rocket_2.getX() < -50) {
+                                RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
+                                randobj = 180;
+                                mleft = true;
+                                RAM.CurrentScore++;
+                            } else if ((enablehit && ((RAM.Rocket_2.getX() < RAM.player_user.getX() + RAM.player_user.getWidth()) && RAM.Rocket_2.getX() + 90 > RAM.player_user.getX() + RAM.player_user.getWidth()) && (RAM.player_user.getY() + RAM.player_user.getHeight() > RAM.Rocket_2.getY()))) {
+                                RAM.Rocket_2.setX(RAM.SCREEN_WIDTH);
+                                randobj = 180;
+                                mleft = true;
+                                RAM.isFalling = true;
+                                RAM.hitRfallL = true;
+                                enablehit = false;
+                                RAM.canControl = false;
+                            } else {
+                                RAM.Rocket_2.setX(RAM.Rocket_2.getX() - 20f - RAM.CurrentScore);
+                            }
+                        }
+                    } else if (rvalue == 1) {
+                        if (RAM.Bomb.getY() > (2 * RAM.SCREEN_HEIGHT / 3) - 50) {
+                            RAM.Bomb.setY(-50);
+                            randobj = 180;
+                            RAM.CurrentScore++;
+                        } else if (enablehit && ((RAM.Bomb.getY() + RAM.Bomb.getHeight() > RAM.player_user.getY()) && (Math.abs(RAM.Bomb.getX() - RAM.player_user.getX())) < RAM.Bomb.getWidth())) {
+                            RAM.Bomb.setY(-50);
+                            randobj = 180;
+                            RAM.isBlast = true;
+                            if (RAM.Bomb.getX() > RAM.player_user.getX()) {
+                                RAM.blastLeft = false;
+                            } else {
+                                RAM.blastLeft = true;
+                            }
+                            RAM.hitRfallL = true;
+                            enablehit = false;
+                            RAM.canControl = false;
+                            RAM.isFalling = false;
+                        } else {
+                            RAM.Bomb.setY(RAM.Bomb.getY() + 25f + RAM.CurrentScore);
+                        }
+                    } else if (rvalue == 2) {
+                        if (sleft) {
+                            if (RAM.Grenade_1.getY() > (2 * RAM.SCREEN_HEIGHT / 3) - 50) {
+                                RAM.Grenade_1.setY((2 * RAM.SCREEN_HEIGHT / 3) - 400);
+                                randobj = 180;
+                                sleft = false;
+                                sUpDown = 20;
+                                RAM.Grenade_1.setX(-50);
+                                RAM.CurrentScore++;
+                            } else if ((enablehit && (RAM.Grenade_1.getX() < RAM.player_user.getX() + RAM.player_user.getWidth()) && (RAM.Grenade_1.getX() > RAM.player_user.getX() - RAM.Grenade_1.getWidth()) && (RAM.Grenade_1.getY() + RAM.Grenade_1.getHeight() > RAM.player_user.getY()))) {
+                                randobj = 180;
+                                sleft = false;
+                                sUpDown = 20;
+                                RAM.Grenade_1.setX(-50);
+                                RAM.isFalling = true;
+                                RAM.hitLfallR = true;
+                                enablehit = false;
+                                RAM.canControl = false;
+                                RAM.CurrentScore++;
+                            } else {
+                                RAM.Grenade_1.setY(RAM.Grenade_1.getY() - (sUpDown--));
+                                RAM.Grenade_1.setX(RAM.Grenade_1.getX() + 15f + sChange);
+                            }
+                        } else {
+                            if (RAM.Grenade_2.getY() > (2 * RAM.SCREEN_HEIGHT / 3) - 50) {
+                                RAM.Grenade_2.setY((2 * RAM.SCREEN_HEIGHT / 3) - 400);
+                                randobj = 180;
+                                sleft = true;
+                                sUpDown = 20;
+                                RAM.Grenade_2.setX(RAM.SCREEN_WIDTH);
+                                RAM.CurrentScore++;
+                            } else if ((enablehit && (RAM.Grenade_2.getX() < RAM.player_user.getX() + RAM.player_user.getWidth()) && (RAM.Grenade_2.getX() > RAM.player_user.getX() - RAM.Grenade_2.getWidth()) && (RAM.Grenade_2.getY() + RAM.Grenade_2.getHeight() > RAM.player_user.getY()))) {
+                                randobj = 180;
+                                sleft = true;
+                                sUpDown = 20;
+                                RAM.Grenade_2.setX(RAM.SCREEN_WIDTH);
+                                RAM.isFalling = true;
+                                RAM.hitRfallL = true;
+                                enablehit = false;
+                                RAM.canControl = false;
+                                RAM.CurrentScore++;
+                            } else {
+                                RAM.Grenade_2.setY(RAM.Grenade_2.getY() - (sUpDown--));
+                                RAM.Grenade_2.setX(RAM.Grenade_2.getX() - 15f + sChange);
+                            }
+                        }
+                    }
+                }
+                if (RAM.cloud_render_1.getX() >= RAM.SCREEN_WIDTH) {
+                    RAM.cloud_render_1.setX(-RAM.cloud_render_1.getWidth());
+                } else {
+                    RAM.cloud_render_1.setX(RAM.cloud_render_1.getX() + 0.5f);
+                }
 
-            if (RAM.cloud_render_2.getX() - RAM.cloud_render_2.getWidth() >= 0) {
-                RAM.cloud_render_2.setX(RAM.SCREEN_WIDTH - RAM.cloud_render_2.getWidth());
-            } else {
-                RAM.cloud_render_2.setX(RAM.cloud_render_2.getX() - 1.0f);
-            }
+                if (RAM.cloud_render_3.getX() >= RAM.SCREEN_WIDTH) {
+                    RAM.cloud_render_3.setX(-RAM.cloud_render_3.getWidth());
+                } else {
+                    RAM.cloud_render_3.setX(RAM.cloud_render_3.getX() + 0.5f);
+                }
 
-            if (RAM.isJump) {
-                if (RAM.t == 75) {
-                    RAM.isJump = false;
-                    RAM.t = 0;
-                    //player_user.setY(2*(screen_height/3) - player_bitmap_left.getHeight());
+                if (RAM.cloud_render_2.getX() - RAM.cloud_render_2.getWidth() >= 0) {
+                    RAM.cloud_render_2.setX(RAM.SCREEN_WIDTH - RAM.cloud_render_2.getWidth());
+                } else {
+                    RAM.cloud_render_2.setX(RAM.cloud_render_2.getX() - 1.0f);
+                }
+
+                if (RAM.isJump && RAM.canControl) {
+                    if (RAM.t == 75) {
+                        RAM.isJump = false;
+                        RAM.t = 0;
+                        //player_user.setY(2*(screen_height/3) - player_bitmap_left.getHeight());
+                    } else {
+
+                        RAM.t += 3;
+                    }
+                    RAM.player_user.setY((float) (RAM.player_user.getY() - 37.5 + RAM.t));
+                    //figure.setY((float) (figure.getY() - 37.5 + t));
+                }
+                RAM.player_user.setX(RAM.player_user.getX() + RAM.modifier);
+
+                if (RAM.player_user.getY() >= RAM.SCREEN_HEIGHT) {
+                    RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
+                    RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
+                    RAM.isFalling = false;
+                }
+
+                if (!RAM.isBlast && RAM.player_user.getX() > RAM.SCREEN_WIDTH - 95) {
+                    //player_user.setY(player_user.getY() - 50);
+                    RAM.isFalling = true;
+                    RAM.fallR = true;
+                    RAM.canControl = false;
+                } else if (!RAM.isBlast && RAM.player_user.getX() < 95 - RAM.platform_end_left.getWidth()) {
+                    RAM.isFalling = true;
+                    RAM.fallL = true;
+                    RAM.canControl = false;
+                    //player_user.setY(player_user.getY() - 50);
+                } else {
+                    //to do
+                }
+                if (RAM.isBlast) {
+                    RAM.player_user.setY(RAM.player_user.getY() - RAM.blastAmount);
+                    if (everyOther) {
+                        RAM.blastAmount -= 2;
+                        everyOther = false;
+                    } else {
+                        everyOther = true;
+                    }
+                    if (RAM.blastLeft) {
+                        RAM.player_user.setX(RAM.player_user.getX() + 15);
+                    } else {
+                        RAM.player_user.setX(RAM.player_user.getX() - 15);
+                    }
+                    RAM.modifier = 0;
+                    RAM.canControl = false;
+                }
+                if (RAM.player_user.getY() < 0) {
+                    RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
+                    RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
+                    RAM.isBlast = false;
+                    RAM._score_counter = 0;
+                    RAM.rotationAngle = 0;
+                    enablehit = true;
+                }
+                if (RAM.isFalling) {
+                    RAM.modifier = 0;
+                    if (everyOther) {
+                        RAM.deadMovement--;
+                        everyOther = false;
+                    } else {
+                        everyOther = true;
+                    }
+                    RAM.player_user.setY(RAM.player_user.getY() + RAM._score_counter);
+                    if (RAM.hitRfallL) {
+                        RAM.player_user.setX(RAM.player_user.getX() - RAM.deadMovement);
+                    } else if (RAM.hitLfallR) {
+                        RAM.player_user.setX(RAM.player_user.getX() + RAM.deadMovement);
+                    }
+                    if(RAM.fallL){
+                        RAM.player_user.setX(RAM.player_user.getX() -2);
+                    }else if(RAM.fallR){
+                        RAM.player_user.setX(RAM.player_user.getX() + 2);
+                    }
+                    RAM._score_counter++;
                 } else {
 
-                    RAM.t += 3;
                 }
-                RAM.player_user.setY((float) (RAM.player_user.getY() - 37.5 + RAM.t));
-                //figure.setY((float) (figure.getY() - 37.5 + t));
-            }
-            RAM.player_user.setX(RAM.player_user.getX() + RAM.modifier);
-
-            if (RAM.player_user.getY() >= RAM.SCREEN_HEIGHT) {
-                RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
-                RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
-                RAM.isFalling = false;
-            }
-
-            if (RAM.player_user.getX() > RAM.SCREEN_WIDTH-125) {
-                //player_user.setY(player_user.getY() - 50);
-                RAM.isFalling = true;
-            } else if (RAM.player_user.getX() < 125 - RAM.platform_end_left.getWidth()) {
-                RAM.isFalling = true;
-                //player_user.setY(player_user.getY() - 50);
-            } else {
-                //to do
-            }
-
-            if (RAM.isFalling) {
-                RAM.modifier = 0;
-                if(everyOther){
-                    RAM.deadMovement--;
-                    everyOther = false;
-                }else{
-                    everyOther = true;
-                }
-                RAM.player_user.setY(RAM.player_user.getY() + RAM._score_counter);
-                if(RAM.hitRfallL) {
-                    RAM.player_user.setX(RAM.player_user.getX() - RAM.deadMovement);
-                }else if(RAM.hitLfallR)
-                    RAM.player_user.setX(RAM.player_user.getX() + RAM.deadMovement);
-                RAM._score_counter++;
-            } else {
 
             }
             if (RAM.player_user.getY() >= RAM.SCREEN_HEIGHT) {
-                RAM.player_user.setY(2 * (RAM.SCREEN_HEIGHT / 3) - RAM.player_bitmap_left.getHeight());
-                RAM.player_user.setX(RAM.SCREEN_WIDTH / 2);
+
                 RAM.isFalling = false;
                 RAM._score_counter = 0;
                 RAM.rotationAngle = 0;
                 RAM.hitRfallL = false;
                 RAM.hitLfallR = false;
                 RAM.deadMovement = 30;
+                RAM.isBlast = false;
+                RAM.blastAmount = 45;
+                RAM.canControl = true;
+                RAM.isJump = false;
                 enablehit = true;
+                if(!isDead) {
+                    RAM.GlobalScore = RAM.CurrentScore;
+                }
+                if (RAM.GlobalScore > RAM.GlobalHighScore) {
+                    RAM.GlobalHighScore = RAM.GlobalScore;
+                }
+                RAM.CurrentScore = 0;
+                RAM.fallR = false;
+                RAM.fallL = false;
+                RAM.t = 0;
+                isDead = true;
             }
         }
+
     }
 }

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:paddingLeft="0dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:paddingLeft="0dp"
     android:paddingRight="0dp"
     android:paddingTop="0dp"
-    android:paddingBottom="0dp" tools:context=".loader_activity">
+    android:paddingBottom="0dp"
+    tools:context=".loader_activity">
 
     <SurfaceView
         android:layout_width="match_parent"
@@ -20,6 +24,31 @@
         android:visibility="visible"
         android:id="@+id/front_cover">
     </View>
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="40dp"
+        android:textColor="#d3d3d3"
+        android:layout_marginTop="27dp"
+        android:layout_x="84dp"
+        android:layout_y="49dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+    <TextView
+        android:id="@+id/titleText2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="High Score: "
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="40dp"
+        android:textColor="#d3d3d3"
+        android:layout_x="84dp"
+        android:layout_y="49dp"
+        android:layout_below="@+id/titleText"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible" />
 
     <ProgressBar
         style="?android:attr/progressBarStyleLarge"
@@ -40,5 +69,15 @@
         android:layout_marginBottom="23dp"
         android:textColor="#FFFFFF"
         android:textSize="20dp" />
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/banner_ad_unit_id">
+    </com.google.android.gms.ads.AdView>
 
 </RelativeLayout>

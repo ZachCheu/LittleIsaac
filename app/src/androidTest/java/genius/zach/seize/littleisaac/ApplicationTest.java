@@ -1,4 +1,4 @@
-package com.example.seize.littleisaac;
+package genius.zach.seize.littleisaac;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
