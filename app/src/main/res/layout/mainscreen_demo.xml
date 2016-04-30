@@ -5,12 +5,106 @@
     android:background="#276e7b">
 
     <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/imageView"
+        android:color="#6ff7cd"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="#6ff7cd" />
+
+    <ImageView
         android:layout_width="800px"
         android:layout_height="800px"
-        android:id="@+id/imageView"
+        android:id="@+id/imageView2"
         android:src="@drawable/mountain_start"
         android:scaleType="fitCenter"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/imageView"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <ImageView
+        android:layout_width="135dp"
+        android:layout_height="135dp"
+        android:id="@+id/imageView3"
+        android:src="@drawable/moon"
+        android:scaleType="fitXY"
+        android:layout_marginLeft="26dp"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="26dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="190px"
+        android:layout_height="345px"
+        android:id="@+id/imageView4"
+        android:layout_marginBottom="24dp"
+        android:src="@drawable/boosh"
+        android:scaleType="fitXY"
+        android:layout_alignBottom="@+id/imageView"
+        android:layout_toLeftOf="@+id/imageView2"
+        android:layout_toStartOf="@+id/imageView2" />
+
+    <ImageView
+        android:layout_width="190px"
+        android:layout_height="345px"
+        android:id="@+id/imageView5"
+        android:src="@drawable/boosh"
+        android:scaleType="fitXY"
+        android:layout_alignBottom="@+id/imageView"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:layout_width="190px"
+        android:layout_height="345px"
+        android:id="@+id/imageView6"
+        android:src="@drawable/boosh"
+        android:scaleType="fitXY"
+        android:layout_alignBottom="@+id/imageView4"
+        android:layout_toRightOf="@+id/imageView5"
+        android:layout_toEndOf="@+id/imageView5" />
+
+    <ImageView
+        android:layout_width="190px"
+        android:layout_height="345px"
+        android:id="@+id/imageView7"
+        android:src="@drawable/boosh"
+        android:scaleType="fitXY"
+        android:layout_alignTop="@+id/imageView4"
+        android:layout_alignRight="@+id/imageView3"
+        android:layout_alignEnd="@+id/imageView3" />
+
+    <ImageView
+        android:layout_width="190px"
+        android:layout_height="345px"
+        android:id="@+id/imageView8"
+        android:src="@drawable/boosh"
+        android:scaleType="fitXY"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/imageView5" />
+
+    <Button
+        android:layout_width="135dp"
+        android:layout_height="wrap_content"
+        android:text="Play"
+        android:id="@+id/button"
+        android:background="#CCe74c3c"
+        android:textColor="#FFFFFF"
+        android:layout_above="@+id/imageView6"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Little Isaac"
+        android:id="@+id/textView"
+        android:textColor="#FFFFFF"
+        android:textSize="45dp"
+        android:layout_above="@+id/imageView2"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>
