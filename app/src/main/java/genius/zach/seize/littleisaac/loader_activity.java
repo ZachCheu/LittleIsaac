@@ -71,6 +71,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     int randobj = 0, rvalue, fallnear, sUpDown = 20, sChange;
     Random r = new Random();
     boolean mleft = true, sleft = false, everyOther = true, enablehit = true, isDead = false;
+    int clickCounter = 0;
 
 
     @Override
@@ -144,10 +145,10 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         if (isGameLoopThreadRunning && RAM.canControl) {
                             if (-sensorEvent.values[0] > 1) {
                                 RAM.player_user.setDirection(1);
-                                RAM.modifier = 15f;
+                                RAM.modifier = RAM.SCREEN_WIDTH/100;
                             } else if (-sensorEvent.values[0] < -1) {
                                 RAM.player_user.setDirection(0);
-                                RAM.modifier = -15f;
+                                RAM.modifier = -RAM.SCREEN_WIDTH/100;
                             } else {
                                 RAM.modifier = 0.0f;
                             }
@@ -182,9 +183,6 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
             }
         }.start();
-        MediaPlayer mp = MediaPlayer.create(loader_activity.this, R.raw.tetris_gameboy_soundtrack);
-        MediaPlayer hit = MediaPlayer.create(loader_activity.this, R.raw.hit);
-        mp.start();
     }
 
     public void startEndingActivity() {
@@ -417,7 +415,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         _surfaceHolder.unlockCanvasAndPost(c);
                     }
                     sleepTime = SystemClock.currentThreadTimeMillis() - startTime;
-                    //fpsCounter = String.valueOf(1000 / sleepTime);
+                    fpsCounter = String.valueOf(1000 / sleepTime);
                     if (sleepTime <= ticksFPS) {
                         try {
                             sleep(Math.max(ticksFPS - sleepTime, 0));
@@ -455,6 +453,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         System.out.println("X: " + RAM.player_user.getX());
                         System.out.println("Y: " + RAM.player_user.getY());
                     }
+
                     //Log.d("A", "TESTING2");
                     canvas.drawColor(Color.parseColor("#FFFFFF"));
 
@@ -485,15 +484,22 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                     for (int i = 200; i <= RAM.SCREEN_WIDTH - 175; i += 25) {
                         canvas.drawBitmap(RAM.platform_under, i - 25 + RAM.platform_under.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under.getHeight(), null);
                     }
+                    if(clickCounter > 0) {
+                        RAM.Rocket_1.draw(canvas);
+                        RAM.Rocket_2.draw(canvas);
+                        RAM.Bomb.draw(canvas);
+                        RAM.Grenade_1.draw(canvas);
+                        RAM.Grenade_2.draw(canvas);
+                    }else{
+                        if(System.currentTimeMillis()%25 == 0){
+                            canvas.drawText("Tap to Start", RAM.SCREEN_WIDTH/2, RAM.SCREEN_HEIGHT/8, continueGame);
+                        }
+                    }
 
                     RAM.cloud_render_1.draw(canvas);
                     //RAM.cloud_render_2.draw(canvas);
                     RAM.cloud_render_3.draw(canvas);
-                    RAM.Rocket_1.draw(canvas);
-                    RAM.Rocket_2.draw(canvas);
-                    RAM.Bomb.draw(canvas);
-                    RAM.Grenade_1.draw(canvas);
-                    RAM.Grenade_2.draw(canvas);
+
                     //RAM.Explosion.draw(canvas);
                     if (RAM.hitLfallR) {
                         //RAM.player_bitmap_right = RotateBitmap(RAM.player_bitmap_right, 5f);
@@ -529,6 +535,8 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                         canvas.drawText("Score: " + RAM.GlobalScore, RAM.SCREEN_WIDTH / 2 - 260, RAM.SCREEN_HEIGHT / 3, highScorePaint);
                         canvas.drawText("Tap to Continue", RAM.SCREEN_WIDTH / 2 - 200, RAM.SCREEN_HEIGHT / 3 + 300, continueGame);
                     }
+                    canvas.drawText(fpsCounter, 1080-100, 100, p);
+
                 }
                 canvas.restore();
             }

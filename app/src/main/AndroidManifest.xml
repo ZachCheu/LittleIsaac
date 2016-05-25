@@ -15,12 +15,11 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
         <meta-data android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-        <activity android:name="genius.zach.seize.littleisaac.loader_activity" android:noHistory="true">
 
-        </activity>
+
         <activity android:name="genius.zach.seize.littleisaac.end_screen">
         </activity>
-        <activity android:name="genius.zach.seize.littleisaac.MainMenuActivity">
+        <activity android:name="genius.zach.seize.littleisaac.loader_activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
