@@ -17,6 +17,7 @@ import android.hardware.SensorManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.SystemClock;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -42,6 +43,8 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     private SurfaceHolder _surfaceHolder;
     private SurfaceView _surfaceView;
 
+    public String fpsCounter = "";
+
     //Variables associated with GameLoopThread
     private GameLoopThread gameLoopThread;
     static boolean textures_isFinished_loading;
@@ -60,12 +63,14 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
     private final Paint highScorePaint = new Paint();
     private final Paint continueGame = new Paint();
 
+    public Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     private AdView mAdView;
 
     //projectile components
-    int randobj = 0, rvalue, fallnear,sUpDown = 20,sChange;
+    int randobj = 0, rvalue, fallnear, sUpDown = 20, sChange;
     Random r = new Random();
-    boolean mleft = true, sleft = false, everyOther = true,enablehit =true,isDead = false;
+    boolean mleft = true, sleft = false, everyOther = true, enablehit = true, isDead = false;
 
 
     @Override
@@ -79,7 +84,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
             mAdView = (AdView) findViewById(R.id.adView);
             AdRequest adRequest = new AdRequest.Builder().build();
             mAdView.loadAd(adRequest);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         Display device_display = getWindowManager().getDefaultDisplay();
@@ -97,9 +102,9 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         loading_text_font = Typeface.createFromAsset(getAssets(), "fonts/loader_font.TTF");
         loading_text = (TextView) findViewById(R.id.Loader_text);
         loading_text.setTypeface(loading_text_font);
-        score_font = Typeface.createFromAsset(getAssets(),"fonts/loader_font.TTF");
+        score_font = Typeface.createFromAsset(getAssets(), "fonts/loader_font.TTF");
         score = (TextView) findViewById(R.id.Loader_text);
-        t = (TextView)  findViewById(R.id.titleText);
+        t = (TextView) findViewById(R.id.titleText);
         a = (TextView) findViewById(R.id.titleText2);
         t.setTypeface(loading_text_font);
         a.setTypeface(loading_text_font);
@@ -170,19 +175,19 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
             public void onFinish() {
                 loader_spinner.setVisibility(View.INVISIBLE);
                 loading_text.setVisibility(View.INVISIBLE);
-                for(int i = 255000; i >= 0; i -= 100){
-                    front_cover.getBackground().setAlpha(i/100);
+                for (int i = 255000; i >= 0; i -= 100) {
+                    front_cover.getBackground().setAlpha(i / 100);
                 }
 
 
             }
         }.start();
         MediaPlayer mp = MediaPlayer.create(loader_activity.this, R.raw.tetris_gameboy_soundtrack);
-        MediaPlayer hit = MediaPlayer.create(loader_activity.this,R.raw.hit);
+        MediaPlayer hit = MediaPlayer.create(loader_activity.this, R.raw.hit);
         mp.start();
     }
 
-    public void startEndingActivity(){
+    public void startEndingActivity() {
         try {
             gameLoopThread.setRunning(false);
             //gameLoopThread.stop();
@@ -264,11 +269,13 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
     class GameLoopThread extends Thread {
         private GamePhysicsThread gamePhysicsThread;
+        private boolean run = false;
 
         public GameLoopThread(SurfaceHolder surfaceHolder, Handler handler) {
             _surfaceHolder = surfaceHolder;
             handlerApplication = handler;
             gamePhysicsThread = new GamePhysicsThread();
+            run = true;
         }
 
         public boolean getRunning() {
@@ -297,19 +304,19 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 RAM.player_bitmap_left = BitmapFactory.decodeResource(getResources(), R.drawable.character_left);
 
                 //load grenade texture
-                RAM.GrenadeBit = BitmapFactory.decodeResource(getResources(),R.drawable.grenade);
-                RAM.Grenade_1 = new sideObject(-50,(2*RAM.SCREEN_HEIGHT/3)-400,RAM.GrenadeBit);
-                RAM.Grenade_2 = new sideObject(RAM.SCREEN_WIDTH,(2*RAM.SCREEN_HEIGHT/3)-400,RAM.GrenadeBit);
+                RAM.GrenadeBit = BitmapFactory.decodeResource(getResources(), R.drawable.grenade);
+                RAM.Grenade_1 = new sideObject(-50, (2 * RAM.SCREEN_HEIGHT / 3) - 400, RAM.GrenadeBit);
+                RAM.Grenade_2 = new sideObject(RAM.SCREEN_WIDTH, (2 * RAM.SCREEN_HEIGHT / 3) - 400, RAM.GrenadeBit);
 
                 //load bomb texture
-                RAM.BombBit = BitmapFactory.decodeResource(getResources(),R.drawable.bomb);
-                RAM.Bomb = new fallingObject(0,-50,RAM.BombBit);
+                RAM.BombBit = BitmapFactory.decodeResource(getResources(), R.drawable.bomb);
+                RAM.Bomb = new fallingObject(0, -50, RAM.BombBit);
 
                 //load missile texture
                 RAM.RocketBit1 = BitmapFactory.decodeResource(getResources(), R.drawable.rocketleft);
-                RAM.RocketBit2 = BitmapFactory.decodeResource(getResources(),R.drawable.rocketright);
-                RAM.Rocket_1 = new missile(-10,(2*RAM.SCREEN_HEIGHT/3)-75,RAM.RocketBit1);
-                RAM.Rocket_2 = new missile(RAM.SCREEN_WIDTH,(2*RAM.SCREEN_HEIGHT/3)-75,RAM.RocketBit2);
+                RAM.RocketBit2 = BitmapFactory.decodeResource(getResources(), R.drawable.rocketright);
+                RAM.Rocket_1 = new missile(-10, (2 * RAM.SCREEN_HEIGHT / 3) - 75, RAM.RocketBit1);
+                RAM.Rocket_2 = new missile(RAM.SCREEN_WIDTH, (2 * RAM.SCREEN_HEIGHT / 3) - 75, RAM.RocketBit2);
 
                 //resize
                 RAM.player_bitmap_right = getResizedBitmap(RAM.player_bitmap_right, 108, 44);
@@ -320,13 +327,13 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 RAM.tree_type_2 = BitmapFactory.decodeResource(getResources(), R.drawable.tree_type_2);
 
                 //load explosion animation
-                RAM.explosion1 = BitmapFactory.decodeResource(getResources(),R.drawable.particle1);
+                RAM.explosion1 = BitmapFactory.decodeResource(getResources(), R.drawable.particle1);
                 RAM.explosion2 = BitmapFactory.decodeResource(getResources(), R.drawable.particle2);
 
                 //load clouds!
                 RAM.cloud_render = BitmapFactory.decodeResource(getResources(), R.drawable.cloud_render);
                 RAM.cloud_render = getResizedBitmap(RAM.cloud_render, 67, 204);
-                RAM.cloud_render_1 = new cloud(RAM.SCREEN_WIDTH/300, 210, RAM.cloud_render);
+                RAM.cloud_render_1 = new cloud(RAM.SCREEN_WIDTH / 300, 210, RAM.cloud_render);
                 RAM.cloud_render_2 = new cloud(RAM.SCREEN_WIDTH - 2 * RAM.cloud_render.getWidth(), (RAM.SCREEN_HEIGHT / 3 + 100), RAM.cloud_render);
                 RAM.cloud_render_3 = new cloud(RAM.SCREEN_WIDTH - RAM.cloud_render.getWidth(), (RAM.SCREEN_HEIGHT / 3 - 150), RAM.cloud_render);
 
@@ -380,41 +387,50 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
                 //END OF LOADING TEXTURES//
                 textures_isFinished_loading = true;
+                p.setTextSize(45.0f);
+                p.setColor(Color.BLACK);
+                p.setAntiAlias(true);
 
             }
         }
 
         public void run() {
-            long tickFPS = 1000 / 60;
+            long ticksFPS = 1000 / 60;
             long startTime;
             long sleepTime;
-            //Log.d("A","TESTING4");
-            gamePhysicsThread.setRunning(true);
-            while (isGameLoopThreadRunning) {
-                //Log.d("A","TESTING3");
+            final int max_skip_frames = 2;
+            int skipframes = 0;
+
+            while (run) {
+                startTime = SystemClock.currentThreadTimeMillis();
                 Canvas c = null;
-                startTime = System.currentTimeMillis();
                 try {
                     c = _surfaceHolder.lockCanvas(null);
                     synchronized (_surfaceHolder) {
-                        //update, draw
                         gamePhysicsThread.update();
                         doDraw(c);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     if (c != null) {
                         _surfaceHolder.unlockCanvasAndPost(c);
                     }
-                }
-                sleepTime = tickFPS - (System.currentTimeMillis() - startTime);
-                try {
-                    if (sleepTime > 0) {
-                        sleep(sleepTime);
+                    sleepTime = SystemClock.currentThreadTimeMillis() - startTime;
+                    //fpsCounter = String.valueOf(1000 / sleepTime);
+                    if (sleepTime <= ticksFPS) {
+                        try {
+                            sleep(Math.max(ticksFPS - sleepTime, 0));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     } else {
-                        sleep(10);
+                        skipframes++;
                     }
-                } catch (Exception e) {
-
+                    while (skipframes >= max_skip_frames) {
+                        gamePhysicsThread.update();
+                        skipframes--;
+                    }
                 }
             }
         }
@@ -431,89 +447,91 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
 
 
         public void doDraw(Canvas canvas) {
-            canvas.save();
-            //Log.d("A", "TESTING5");
-            if (isGameLoopThreadRunning) {
-                if(!RAM.isBlast && !RAM.isFalling &&!RAM.fallR&&!RAM.fallL&&!RAM.hitLfallR&&!RAM.hitRfallL) {
-                    System.out.println("X: " + RAM.player_user.getX());
-                    System.out.println("Y: " + RAM.player_user.getY());
-                }
-                //Log.d("A", "TESTING2");
-                canvas.drawColor(Color.parseColor("#FFFFFF"));
+            if (run) {
+                canvas.save();
+                //Log.d("A", "TESTING5");
+                if (isGameLoopThreadRunning) {
+                    if (!RAM.isBlast && !RAM.isFalling && !RAM.fallR && !RAM.fallL && !RAM.hitLfallR && !RAM.hitRfallL) {
+                        System.out.println("X: " + RAM.player_user.getX());
+                        System.out.println("Y: " + RAM.player_user.getY());
+                    }
+                    //Log.d("A", "TESTING2");
+                    canvas.drawColor(Color.parseColor("#FFFFFF"));
 
-                //draw background tiles!
-                canvas.drawRect(0, 0, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3, RAM.paint);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + RAM.SCREEN_HEIGHT / 9, RAM.paint1);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + RAM.SCREEN_HEIGHT / 9, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 2 * (RAM.SCREEN_HEIGHT / 9), RAM.paint2);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 2 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 3 * (RAM.SCREEN_HEIGHT / 9), RAM.paint3);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 3 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 4 * (RAM.SCREEN_HEIGHT / 9), RAM.paint4);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 4 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 5 * (RAM.SCREEN_HEIGHT / 9), RAM.paint5);
-                canvas.drawBitmap(RAM.mountains, 0, RAM.SCREEN_HEIGHT - RAM.mountains.getHeight(), null);
+                    //draw background tiles!
+                    canvas.drawRect(0, 0, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3, RAM.paint);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + RAM.SCREEN_HEIGHT / 9, RAM.paint1);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + RAM.SCREEN_HEIGHT / 9, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 2 * (RAM.SCREEN_HEIGHT / 9), RAM.paint2);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 2 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 3 * (RAM.SCREEN_HEIGHT / 9), RAM.paint3);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 3 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 4 * (RAM.SCREEN_HEIGHT / 9), RAM.paint4);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT / 3 + 4 * (RAM.SCREEN_HEIGHT / 9), RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT / 3 + 5 * (RAM.SCREEN_HEIGHT / 9), RAM.paint5);
+                    canvas.drawBitmap(RAM.mountains, 0, RAM.SCREEN_HEIGHT - RAM.mountains.getHeight(), null);
 
-                //render trees here!
-                for (int i = 0; i < RAM.SCREEN_HEIGHT / RAM.tree_type_1.getWidth(); i++) {
-                    if (i % 2 == 0) {
-                        canvas.drawBitmap(RAM.tree_type_1, i * RAM.tree_type_1.getWidth(), RAM.SCREEN_HEIGHT - 100 - RAM.tree_type_1.getHeight(), null);
-                    } else {
-                        canvas.drawBitmap(RAM.tree_type_2, i * RAM.tree_type_2.getWidth(), RAM.SCREEN_HEIGHT - 100 - RAM.tree_type_2.getHeight(), null);
+                    //render trees here!
+                    for (int i = 0; i < RAM.SCREEN_HEIGHT / RAM.tree_type_1.getWidth(); i++) {
+                        if (i % 2 == 0) {
+                            canvas.drawBitmap(RAM.tree_type_1, i * RAM.tree_type_1.getWidth(), RAM.SCREEN_HEIGHT - 100 - RAM.tree_type_1.getHeight(), null);
+                        } else {
+                            canvas.drawBitmap(RAM.tree_type_2, i * RAM.tree_type_2.getWidth(), RAM.SCREEN_HEIGHT - 100 - RAM.tree_type_2.getHeight(), null);
+                        }
+                    }
+
+                    RAM.player_user.draw(canvas);
+                    canvas.drawBitmap(RAM.platform_end_left, 150 - RAM.platform_end_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3), null);
+                    for (int i = 150; i <= RAM.SCREEN_WIDTH - 125; i += 25) {
+                        canvas.drawBitmap(RAM.platform_middle, i - 25 + RAM.platform_middle.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3), null);
+                    }
+                    canvas.drawBitmap(RAM.platform_end_right, RAM.SCREEN_WIDTH - 125, 2 * (RAM.SCREEN_HEIGHT / 3), null);
+                    for (int i = 200; i <= RAM.SCREEN_WIDTH - 175; i += 25) {
+                        canvas.drawBitmap(RAM.platform_under, i - 25 + RAM.platform_under.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under.getHeight(), null);
+                    }
+
+                    RAM.cloud_render_1.draw(canvas);
+                    //RAM.cloud_render_2.draw(canvas);
+                    RAM.cloud_render_3.draw(canvas);
+                    RAM.Rocket_1.draw(canvas);
+                    RAM.Rocket_2.draw(canvas);
+                    RAM.Bomb.draw(canvas);
+                    RAM.Grenade_1.draw(canvas);
+                    RAM.Grenade_2.draw(canvas);
+                    //RAM.Explosion.draw(canvas);
+                    if (RAM.hitLfallR) {
+                        //RAM.player_bitmap_right = RotateBitmap(RAM.player_bitmap_right, 5f);
+                    }
+                    if (RAM.hitRfallL) {
+                        //RAM.player_bitmap_left = RotateBitmap(RAM.player_bitmap_left, -5f);
+                    }
+
+                    for (int i = 1; i <= (RAM.SCREEN_HEIGHT - 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under_left.getHeight()) / RAM.portal_1.getHeight(); i++) {
+                        if (i % 2 == 0) {
+                            canvas.drawBitmap(RAM.portal_1, 225 + RAM.platform_under_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
+                        } else {
+                            canvas.drawBitmap(RAM.portal_2, 225 + RAM.platform_under_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
+                        }
+                    }
+
+                    for (int i = 1; i <= (RAM.SCREEN_HEIGHT - 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under_left.getHeight()) / RAM.portal_1.getHeight(); i++) {
+                        if (i % 2 == 0) {
+                            canvas.drawBitmap(RAM.portal_2, RAM.SCREEN_WIDTH - (225 + 2 * RAM.platform_under_left.getWidth()), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
+                        } else {
+                            canvas.drawBitmap(RAM.portal_1, RAM.SCREEN_WIDTH - (225 + 2 * RAM.platform_under_left.getWidth()), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
+                        }
+                    }
+
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 125 + 20, RAM.paint6);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 20, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 100 + 60, RAM.paint7);
+                    canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 60, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT, RAM.paint8);
+                    if (!isDead) {
+                        canvas.drawText("Score: " + RAM.CurrentScore, RAM.SCREEN_WIDTH / 2 - 162, 2 * RAM.SCREEN_HEIGHT / 3 + 250, scorePaint);
+                    }
+                    if (isDead) {
+                        canvas.drawText("Highscore: " + RAM.GlobalHighScore, RAM.SCREEN_WIDTH / 2 - 380, RAM.SCREEN_HEIGHT / 3 - 100, highScorePaint);
+                        canvas.drawText("Score: " + RAM.GlobalScore, RAM.SCREEN_WIDTH / 2 - 260, RAM.SCREEN_HEIGHT / 3, highScorePaint);
+                        canvas.drawText("Tap to Continue", RAM.SCREEN_WIDTH / 2 - 200, RAM.SCREEN_HEIGHT / 3 + 300, continueGame);
                     }
                 }
-
-                RAM.player_user.draw(canvas);
-                canvas.drawBitmap(RAM.platform_end_left, 150 - RAM.platform_end_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3), null);
-                for(int i = 150 ; i<=RAM.SCREEN_WIDTH-125;i+=25){
-                    canvas.drawBitmap(RAM.platform_middle, i-25 + RAM.platform_middle.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3), null);
-                }
-                canvas.drawBitmap(RAM.platform_end_right, RAM.SCREEN_WIDTH - 125, 2 * (RAM.SCREEN_HEIGHT / 3), null);
-                for (int i = 200; i <= RAM.SCREEN_WIDTH-175; i+=25) {
-                    canvas.drawBitmap(RAM.platform_under, i - 25+ RAM.platform_under.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under.getHeight(), null);
-                }
-
-                RAM.cloud_render_1.draw(canvas);
-                //RAM.cloud_render_2.draw(canvas);
-                RAM.cloud_render_3.draw(canvas);
-                RAM.Rocket_1.draw(canvas);
-                RAM.Rocket_2.draw(canvas);
-                RAM.Bomb.draw(canvas);
-                RAM.Grenade_1.draw(canvas);
-                RAM.Grenade_2.draw(canvas);
-                //RAM.Explosion.draw(canvas);
-                if(RAM.hitLfallR){
-                    //RAM.player_bitmap_right = RotateBitmap(RAM.player_bitmap_right, 5f);
-                }
-                if(RAM.hitRfallL){
-                    //RAM.player_bitmap_left = RotateBitmap(RAM.player_bitmap_left, -5f);
-                }
-
-                for (int i = 1; i <= (RAM.SCREEN_HEIGHT - 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under_left.getHeight()) / RAM.portal_1.getHeight(); i++) {
-                    if (i % 2 == 0) {
-                        canvas.drawBitmap(RAM.portal_1, 225 + RAM.platform_under_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
-                    } else {
-                        canvas.drawBitmap(RAM.portal_2, 225 + RAM.platform_under_left.getWidth(), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
-                    }
-                }
-
-                for (int i = 1; i <= (RAM.SCREEN_HEIGHT - 2 * (RAM.SCREEN_HEIGHT / 3) + RAM.platform_under_left.getHeight()) / RAM.portal_1.getHeight(); i++) {
-                    if (i % 2 == 0) {
-                        canvas.drawBitmap(RAM.portal_2, RAM.SCREEN_WIDTH - (225 + 2*RAM.platform_under_left.getWidth()), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
-                    } else {
-                        canvas.drawBitmap(RAM.portal_1, RAM.SCREEN_WIDTH - (225 + 2*RAM.platform_under_left.getWidth()), 2 * (RAM.SCREEN_HEIGHT / 3) + i * RAM.portal_1.getHeight(), null);
-                    }
-                }
-
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 125 + 20, RAM.paint6);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 20, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT - 100 + 60, RAM.paint7);
-                canvas.drawRect(0, RAM.SCREEN_HEIGHT - 100 + 60, RAM.SCREEN_WIDTH, RAM.SCREEN_HEIGHT, RAM.paint8);
-                if(!isDead) {
-                    canvas.drawText("Score: " + RAM.CurrentScore, RAM.SCREEN_WIDTH / 2 - 162, 2 * RAM.SCREEN_HEIGHT / 3 + 250, scorePaint);
-                }
-                if(isDead){
-                    canvas.drawText("Highscore: " + RAM.GlobalHighScore, RAM.SCREEN_WIDTH/2-380,RAM.SCREEN_HEIGHT/3-100,highScorePaint);
-                    canvas.drawText("Score: " + RAM.GlobalScore, RAM.SCREEN_WIDTH/2-260,RAM.SCREEN_HEIGHT/3,highScorePaint);
-                    canvas.drawText("Tap to Continue",RAM.SCREEN_WIDTH/2-200,RAM.SCREEN_HEIGHT/3+300,continueGame);
-                }
+                canvas.restore();
             }
-            canvas.restore();
         }
 
         public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
@@ -528,8 +546,9 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         }
     }
 
-    class GamePhysicsThread {
+    class GamePhysicsThread extends Thread{
         private boolean isRunning = false;
+
         //Log.d()
         public GamePhysicsThread() {
 
@@ -542,11 +561,10 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
         public void setRunning(boolean isRunning) {
             this.isRunning = isRunning;
         }
-        public void update()
-        {
+
+        public void update() {
             //Log.d("A", "TESTING1");
-            if (startGame)
-            {
+            if (startGame) {
                 if (System.currentTimeMillis() - RAM.StartTime / 1000 >= 10) {
                     randobj++;
                     if (randobj > 150) {
@@ -757,9 +775,9 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                     } else if (RAM.hitLfallR) {
                         RAM.player_user.setX(RAM.player_user.getX() + RAM.deadMovement);
                     }
-                    if(RAM.fallL){
-                        RAM.player_user.setX(RAM.player_user.getX() -2);
-                    }else if(RAM.fallR){
+                    if (RAM.fallL) {
+                        RAM.player_user.setX(RAM.player_user.getX() - 2);
+                    } else if (RAM.fallR) {
                         RAM.player_user.setX(RAM.player_user.getX() + 2);
                     }
                     RAM._score_counter++;
@@ -781,7 +799,7 @@ public class loader_activity extends Activity implements SurfaceHolder.Callback 
                 RAM.canControl = true;
                 RAM.isJump = false;
                 enablehit = true;
-                if(!isDead) {
+                if (!isDead) {
                     RAM.GlobalScore = RAM.CurrentScore;
                 }
                 if (RAM.GlobalScore > RAM.GlobalHighScore) {
